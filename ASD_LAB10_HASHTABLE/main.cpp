@@ -5,7 +5,7 @@
 
 int main() {
     system("chcp 1251 & cls");
-    hashTable = (HashItem**)malloc(TABLE_SIZE * sizeof(HashItem*));
+    hashTable = (Item**)malloc(TABLE_SIZE * sizeof(Item*));
     for (int i = 0; i < TABLE_SIZE; i++) {
         hashTable[i] = NULL;
     }
@@ -24,27 +24,26 @@ int main() {
         int choice;
         scanf("%d", &choice);
 
-        char key[50];
         char film[50];
         int year;
 
         switch (choice) {
         case 1: {
-            printf("Введіть (ключ фільм рік): ");
-            scanf("%s %s %d", key, film, &year);
-            insert(key, film, year);
+            printf("Введіть (фільм рік): ");
+            scanf("%s %d",film, &year);
+            insert(film, year);
             break;
         }
         case 2: {
-            printf("Введіть ключ для видалення: ");
-            scanf("%s", key);
-            deleteD(key);
+            printf("Введіть назву для видалення: ");
+            scanf("%s", film);
+            deleteD(film);
             break;
         }
         case 3: {
-            printf("Введіть ключ для пошуку: ");
-            scanf("%s", key);
-            Item* item = search(key);
+            printf("Введіть назву для пошуку: ");
+            scanf("%s", film);
+            Item* item = search(film);
             if (item != NULL) {
                 printf("Об'єкт знайдено: Фільм: %s, Рік: %d\n", item->film, item->year);
             }
@@ -65,7 +64,6 @@ int main() {
             // Звільнення всієї динамічної пам'яті
             for (int i = 0; i < TABLE_SIZE; i++) {
                 if (hashTable[i] != NULL) {
-                    free(hashTable[i]->item);
                     free(hashTable[i]);
                 }
             }

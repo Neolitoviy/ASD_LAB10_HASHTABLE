@@ -7,137 +7,142 @@
 int TABLE_SIZE = 17; // розмірність геш-таблиці
 #define LOAD_FACTOR 0.7 // коефіцієнт завантаження таблиці
 
-HashItem** hashTable;
+Item** hashTable;
 int size = 0;
 
 // Гешування в UNIX OS
 unsigned int hashPJW(const char* str) {
-    unsigned int hash = 0;
-    unsigned int test = 0;
-    for (; *str; str++) {
-        hash = (hash << 4) + (unsigned char)(*str);
+	 unsigned int hash = 0;
+	 unsigned int test = 0;
+	 for (; *str; str++) {
+		  hash = (hash << 4) + (unsigned char)(*str);
 
-        // Перевіряємо, чи є старші 4 біти хешу ненульовими
-        if ((test = hash & 0xf0000000) != 0) {
+		  // Перевіряємо, чи є старші 4 біти хешу ненульовими
+		  if ((test = hash & 0xf0000000) != 0) {
 
-            // Якщо так, то ми виконуємо операцію XOR між гешом і тестом, зсунутим на 24 біти вправо,
-            // і зберігаємо результат у геші, виключаючи старші 4 біти.
+				// Якщо так, то ми виконуємо операцію XOR між гешом і тестом, зсунутим на 24 біти вправо,
+				// і зберігаємо результат у геші, виключаючи старші 4 біти.
 
-            hash = ((hash ^ (test >> 24)) & (0xfffffff));
-        }
-    }
-    return hash % TABLE_SIZE; // Повертаємо значення гешу, обмежене розміром геш-таблиці
+				hash = ((hash ^ (test >> 24)) & (0xfffffff));
+		  }
+	 }
+	 return hash % TABLE_SIZE; // Повертаємо значення гешу, обмежене розміром геш-таблиці
 }
 
 void resizeHashTable() {
-    int oldSize = TABLE_SIZE;
-    TABLE_SIZE *= 2;  // Збільшуємо розмір таблиці вдвічі
+	 int oldSize = TABLE_SIZE;
+	 Item** oldTable = hashTable;
+	 TABLE_SIZE *= 2;
 
-    // Створюємо нову таблицю
-    HashItem** newTable;
-    newTable = (HashItem**)malloc(TABLE_SIZE * sizeof(HashItem*));
-    for (int i = 0; i < TABLE_SIZE; i++) {
-        newTable[i] = NULL;
-    }
+	 // Створюємо нову таблицю з подвоєним розміром
+	 hashTable = (Item**)malloc(sizeof(Item*) * TABLE_SIZE);
+	 for (int i = 0; i < TABLE_SIZE; i++) {
+		  hashTable[i] = NULL;
+	 }
 
-    // Переносимо дані зі старої таблиці до нової
-    for (int i = 0; i < oldSize; i++) {
-        if (hashTable[i] != NULL) {
-            int index = hashPJW(hashTable[i]->key);
-            int j = 0;
-            while (newTable[(index + j * j) % TABLE_SIZE] != NULL) {
-                j++;
-            }
-            newTable[(index + j * j) % TABLE_SIZE] = hashTable[i];
-        }
-    }
+	 // Перерахуємо хеш для кожного елемента в старій таблиці і встановимо його в нову таблицю
+	 for (int i = 0; i < oldSize; i++) {
+		  if (oldTable[i] != NULL) {
+				int index = hashPJW(oldTable[i]->film);
+				while (hashTable[index] != NULL) {
+					 index = (index + i * i) % TABLE_SIZE;
+				}
+				hashTable[index] = oldTable[i];
+		  }
+	 }
 
-    // Звільняємо пам'ять, яку займає стара таблиця
-    free(hashTable);
-
-    // Оновлюємо посилання на таблицю
-    hashTable = newTable;
+	 // Звільнити пам'ять старої таблиці
+	 free(oldTable);
 }
 
-void insert(char* key, char* film, int year) {
+void insert(char* film, int year) {
 
-    // Створюємо новий елемент
-    Item* item = (Item*)malloc(sizeof(Item));
-    strcpy(item->film, film);
-    item->year = year;
+	 // Створюємо новий елемент
+	 Item* item = (Item*)malloc(sizeof(Item));
+	 strcpy(item->film, film);
+	 item->year = year;
 
-    int index = hashPJW(key);
-    int i = 0;
-    while (hashTable[(index + i * i) % TABLE_SIZE] != NULL) {
-        i++;
-    }
+	 int index = hashPJW(film);
+	 int i = 0;
+	 while (hashTable[(index + i * i) % TABLE_SIZE] != NULL) {
+		  i++;
+	 }
 
-    // Створюємо новий геш-елемент і додаємо його до геш-таблиці
-    HashItem* hashItem = (HashItem*)malloc(sizeof(HashItem));
-    strcpy(hashItem->key, key);
-    hashItem->item = item;
-    hashTable[(index + i * i) % TABLE_SIZE] = hashItem;
-    size++;
+	 // Додаємо його до геш-таблиці
+	 hashTable[(index + i * i) % TABLE_SIZE] = item;
+	 size++;
 
-    // Перевіряємо, чи не перевищено допустиме навантаження
-    if ((float)size / TABLE_SIZE >= LOAD_FACTOR) {
-        resizeHashTable();
-    }
+	 // Перевіряємо, чи не перевищено допустиме навантаження
+	 if ((float)size / TABLE_SIZE >= LOAD_FACTOR) {
+		  resizeHashTable();
+	 }
 }
 
-Item* search(const char* key) {
-    int index = hashPJW(key);
-    int i = 0;
+Item* search(const char* film) {
+	 int index = hashPJW(film);
+	 int i = 0;
 
-    //Пошук і порівняння за допомогою квадратичного пробування
-    while (hashTable[(index + i * i) % TABLE_SIZE] != NULL) {
-        if (strcmp(hashTable[(index + i * i) % TABLE_SIZE]->key, key) == 0) {
-            return hashTable[(index + i * i) % TABLE_SIZE]->item;
-        }
-        i++;
-    }
+	 //Пошук і порівняння за допомогою квадратичного пробування
+	 while (hashTable[(index + i * i) % TABLE_SIZE] != NULL) {
+		  if (strcmp(hashTable[(index + i * i) % TABLE_SIZE]->film, film) == 0) {
+				return hashTable[(index + i * i) % TABLE_SIZE];
+		  }
+		  i++;
+	 }
 
-    return NULL;
+	 return NULL;
 }
 
 void deleteD(const char* key) {
-    int index = hashPJW(key);
-    int i = 0;
+	 unsigned int index = hashPJW(key);
 
-    // Шукаємо і видаляємо елемент за допомогою квадратичного пробування
-    while (hashTable[(index + i * i) % TABLE_SIZE] != NULL) {
-        if (strcmp(hashTable[(index + i * i) % TABLE_SIZE]->key, key) == 0) {
-            free(hashTable[(index + i * i) % TABLE_SIZE]->item);
-            free(hashTable[(index + i * i) % TABLE_SIZE]);
-            hashTable[(index + i * i) % TABLE_SIZE] = NULL;
-            size--;
-            return;
-        }
-        i++;
-    }
+	 while (hashTable[index] != NULL) {
+		  if (strcmp(hashTable[index]->film, key) == 0) {
+				
+				// Видалення
+				free(hashTable[index]);
+				hashTable[index] = NULL;
+
+				// Зсування
+				unsigned int nextIndex = (index + 1) % TABLE_SIZE;
+				while (hashTable[nextIndex] != NULL) {
+
+					 Item* tmpItem = hashTable[nextIndex];
+					 hashTable[nextIndex] = NULL;
+
+					 insert(tmpItem->film, tmpItem->year);
+
+					 free(tmpItem);
+
+					 nextIndex = (nextIndex + 1) % TABLE_SIZE;
+				}
+				return;
+		  }
+
+		  ++index;
+
+		  index %= TABLE_SIZE;
+	 }
 }
 
 void loadDataFromFile(const char* filename) {
-    FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Неможливо відкрити файл %s\n", filename);
-        return;
-    }
-
-    char key[50];
-    char film[50];
-    int year;
-    while (fscanf(file, "%s %s %d", key, film, &year) != EOF) {
-        insert(key, film, year);
-    }
-
-    fclose(file);
+	 FILE* file = fopen(filename, "r");
+	 if (file == NULL) {
+		  printf("Неможливо відкрити файл %s\n", filename);
+		  return;
+	 }
+	 char film[50];
+	 int year;
+	 while (fscanf(file, "%s %d", film, &year) != EOF) {
+		  insert(film, year);
+	 }
+	 fclose(file);
 }
 
 void printHashTable() {
-    for (int i = 0; i < TABLE_SIZE; i++) {
-        if (hashTable[i] != NULL) {
-            printf("Індекс: %d, Ключ: %s, Фільм: %s, Рік: %d\n", i, hashTable[i]->key, hashTable[i]->item->film, hashTable[i]->item->year);
-        }
-    }
+	 for (int i = 0; i < TABLE_SIZE; i++) {
+		  if (hashTable[i] != NULL) {
+				printf("Індекс: %d, Фільм: %s, Рік: %d\n", i, hashTable[i]->film, hashTable[i]->year);
+		  }
+	 }
 }

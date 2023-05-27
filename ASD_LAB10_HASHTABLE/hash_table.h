@@ -6,17 +6,12 @@ typedef struct {
     int year;
 } Item;
 
-typedef struct {
-    char key[50];
-    Item* item;
-} HashItem;
-
-extern HashItem** hashTable;
 extern int TABLE_SIZE;
+extern Item** hashTable;
 
 unsigned int hashPJW(const char* key);
 void resizeHashTable();
-void insert(char* key, char* film, int year);
+void insert(char* film, int year);
 Item* search(const char* key);
 void deleteD(const char* key);
 void loadDataFromFile(const char* filename);
