@@ -31,7 +31,7 @@ int main() {
         case 1: {
             printf("¬вед≥ть (ф≥льм р≥к): ");
             scanf("%s %d",film, &year);
-            insert(film, year);
+            insert(film, year, 0);
             break;
         }
         case 2: {

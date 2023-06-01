@@ -9,12 +9,13 @@ typedef struct {
 extern int TABLE_SIZE;
 extern Item** hashTable;
 
-unsigned int hashPJW(const char* key);
+unsigned int hashPJW(const char*);
+int findIndex(const char*);
 void resizeHashTable();
-void insert(char* film, int year);
-Item* search(const char* key);
-void deleteD(const char* key);
-void loadDataFromFile(const char* filename);
+void insert(const char*, int, int);
+Item* search(const char*);
+void deleteD(const char*);
+void loadDataFromFile(const char*);
 void printHashTable();
 
 #endif
